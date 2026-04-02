@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Credvix Radar — Ao Vivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#06080c;
+      --bg-2:#0b1017;
+      --panel:#0d1218;
+      --panel-2:#121922;
+      --line:rgba(255,255,255,.08);
+      --line-soft:rgba(255,255,255,.05);
+      --text:#f7f8fb;
+      --muted:#a6b0be;
+      --muted-2:#7e8898;
+      --orange:#ff7a00;
+      --amber:#f4b000;
+      --teal:#12c7a0;
+      --green:#00d084;
+      --red:#ef4444;
+      --blue:#3b82f6;
+      --shadow:0 22px 56px rgba(0,0,0,.42);
+      --radius-xl:28px;
+      --radius-lg:22px;
+      --radius-md:18px;
+    }
+    * { box-sizing:border-box; }
+    html, body {
+      margin:0;
+      padding:0;
+      background:
+        radial-gradient(circle at 14% 8%, rgba(255,122,0,.12), transparent 22%),
+        radial-gradient(circle at 82% 14%, rgba(255,122,0,.10), transparent 24%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      color:var(--text);
+      font-family:'Montserrat', system-ui, sans-serif;
+    }
+    body { min-height:100vh; }
+    .page { width:min(1480px, calc(100% - 36px)); margin:18px auto 36px; }
+    .panel {
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border:1px solid var(--line);
+      border-radius:var(--radius-xl);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(12px);
+      overflow:hidden;
+    }
+    .header {
+      padding:26px 28px 26px;
+      position:relative;
+      overflow:hidden;
+    }
+    .header::before {
+      content:"";
+      position:absolute;
+      right:-50px;
+      top:-70px;
+      width:240px;
+      height:240px;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(255,122,0,.16), transparent 66%);
+      pointer-events:none;
+    }
+    .header-top {
+      display:flex;
+      justify-content:space-between;
+      gap:24px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:1;
+    }
+    .brand-title {
+      margin:0;
+      font-size:3rem;
+      font-weight:900;
+      line-height:.9;
+      letter-spacing:-.06em;
+    }
+    .brand-title .accent { color:var(--orange); }
+    .brand-subtitle {
+      margin:6px 0 0;
+      font-size:1.05rem;
+      font-weight:800;
+      letter-spacing:-.03em;
+    }
+    .brand-line {
+      margin:12px 0 0;
+      color:#d6dde8;
+      font-size:.82rem;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+    }
+    .header-actions {
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .pill {
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:11px 16px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.09);
+      color:#d7dde7;
+      font-size:.82rem;
+      font-weight:600;
+    }
+    .pill .dot {
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:var(--green);
+      box-shadow:0 0 0 5px rgba(0,208,132,.12);
+      transition:all .2s ease;
+    }
+    .pill .dot.loading {
+      background:var(--amber);
+      box-shadow:0 0 0 5px rgba(244,176,0,.12);
+    }
+    .pill .dot.error {
+      background:var(--red);
+      box-shadow:0 0 0 5px rgba(239,68,68,.12);
+    }
+    .btn {
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      padding:11px 18px;
+      border-radius:999px;
+      font-size:.82rem;
+      font-weight:800;
+      font-family:inherit;
+      color:var(--text);
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.09);
+    }
+    .divider {
+      height:1px;
+      background:linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.16), rgba(255,255,255,.05));
+      margin:18px 0 22px;
+    }
+    .kpi-grid {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:16px;
+      position:relative;
+      z-index:1;
+    }
+    .kpi-card {
+      position:relative;
+      overflow:hidden;
+      min-height:118px;
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.09);
+      padding:18px 20px 16px;
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+    }
+    .kpi-card::before {
+      content:"";
+      position:absolute;
+      right:-24px;
+      top:-26px;
+      width:126px;
+      height:126px;
+      border-radius:50%;
+      filter:blur(4px);
+      pointer-events:none;
+    }
+    .tone-meta::before { background:radial-gradient(circle, rgba(59,130,246,.22), transparent 62%); }
+    .tone-realizado::before { background:radial-gradient(circle, rgba(244,176,0,.24), transparent 62%); }
+    .tone-pct::before { background:radial-gradient(circle, rgba(0,208,132,.24), transparent 62%); }
+    .tone-projecao::before { background:radial-gradient(circle, rgba(18,199,160,.22), transparent 62%); }
+    .tone-gap::before { background:radial-gradient(circle, rgba(239,68,68,.20), transparent 62%); }
+    .tone-diaria::before { background:radial-gradient(circle, rgba(255,122,0,.24), transparent 62%); }
+    .tone-meta { box-shadow:inset 0 0 0 1px rgba(59,130,246,.10); }
+    .tone-realizado { box-shadow:inset 0 0 0 1px rgba(244,176,0,.12); }
+    .tone-pct { box-shadow:inset 0 0 0 1px rgba(0,208,132,.12); }
+    .tone-projecao { box-shadow:inset 0 0 0 1px rgba(18,199,160,.10); }
+    .tone-gap { box-shadow:inset 0 0 0 1px rgba(239,68,68,.10); }
+    .tone-diaria { box-shadow:inset 0 0 0 1px rgba(255,122,0,.12); }
+    .metric-label {
+      color:#aeb7c4;
+      font-size:.72rem;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-weight:700;
+    }
+    .metric-value {
+      margin-top:10px;
+      font-size:2.05rem;
+      line-height:1.02;
+      font-weight:900;
+      letter-spacing:-.06em;
+    }
+    .metric-foot {
+      margin-top:10px;
+      font-size:.84rem;
+      color:var(--muted);
+      font-weight:500;
+    }
+    .section {
+      margin-top:18px;
+      padding:24px;
+    }
+    .section-head {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .section-title {
+      margin:0;
+      font-size:1.95rem;
+      line-height:1;
+      letter-spacing:-.05em;
+      font-weight:900;
+    }
+    .section-copy {
+      margin:10px 0 0;
+      color:var(--muted);
+      font-size:.9rem;
+      font-weight:500;
+    }
+    .grouped-controls {
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:flex-start;
+    }
+    .control-group {
+      padding:10px;
+      border-radius:18px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .control-label {
+      margin:0 0 8px;
+      font-size:.68rem;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      color:#aab3c0;
+      font-weight:700;
+    }
+    .control-row {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .toggle-btn, .chip-btn, .store-switch-btn {
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      color:#d9e0e9;
+      font-size:.78rem;
+      font-weight:800;
+      font-family:inherit;
+    }
+    .toggle-btn.active, .chip-btn.active, .store-switch-btn.active {
+      background:linear-gradient(180deg, rgba(255,122,0,.22), rgba(255,122,0,.12));
+      border-color:rgba(255,122,0,.34);
+      color:#fff3e8;
+    }
+    .store-grid {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:16px;
+      margin-bottom:18px;
+    }
+    .store-card {
+      position:relative;
+      overflow:hidden;
+      padding:18px;
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      cursor:pointer;
+      transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .store-card:hover { transform:translateY(-2px); border-color:rgba(255,122,0,.26); }
+    .store-card.active { border-color:rgba(255,122,0,.34); box-shadow:0 16px 34px rgba(255,122,0,.08); }
+    .store-card::after {
+      content:"";
+      position:absolute;
+      right:-28px;
+      top:-30px;
+      width:120px;
+      height:120px;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(255,122,0,.16), transparent 68%);
+      pointer-events:none;
+    }
+    .store-top {
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+    }
+    .store-name {
+      margin:0;
+      font-size:1.35rem;
+      font-weight:900;
+      letter-spacing:-.04em;
+    }
+    .pct-badge {
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
+      font-size:.78rem;
+      font-weight:800;
+    }
+    .store-desc {
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:.82rem;
+      font-weight:500;
+    }
+    .mini-grid {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+      margin-top:16px;
+    }
+    .mini-card {
+      padding:12px 13px;
+      border-radius:16px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .mini-label {
+      font-size:.68rem;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      color:#aeb7c4;
+      font-weight:700;
+    }
+    .mini-value {
+      margin-top:7px;
+      font-size:1.05rem;
+      font-weight:800;
+      letter-spacing:-.03em;
+    }
+    .detail-panel {
+      position:relative;
+      overflow:hidden;
+      padding:18px 22px 14px;
+      border-radius:28px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(10,15,21,.98), rgba(7,11,16,.96));
+    }
+    .detail-panel::before {
+      content:"";
+      position:absolute;
+      left:0;
+      top:0;
+      width:100%;
+      height:3px;
+      background:linear-gradient(90deg, var(--orange), rgba(255,122,0,.22), transparent 100%);
+    }
+    .detail-panel::after {
+      content:"";
+      position:absolute;
+      right:-60px;
+      top:-60px;
+      width:180px;
+      height:180px;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(18,199,160,.08), transparent 70%);
+      pointer-events:none;
+    }
+    .detail-top {
+      position:relative;
+      z-index:1;
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .detail-name {
+      margin:0;
+      font-size:3rem;
+      line-height:1;
+      font-weight:900;
+      letter-spacing:-.06em;
+    }
+    .detail-desc {
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:.82rem;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      font-weight:500;
+    }
+    .detail-controls {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .detail-table-wrap {
+      position:relative;
+      z-index:1;
+      overflow:auto;
+    }
+    table {
+      width:100%;
+      border-collapse:collapse;
+      min-width:820px;
+    }
+    th, td {
+      padding:15px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      font-size:.92rem;
+    }
+    th {
+      color:#aeb7c4;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-size:.71rem;
+      text-align:left;
+      font-weight:700;
+    }
+    td strong {
+      font-weight:800;
+    }
+    .right { text-align:right; }
+    .status-chip {
+      display:inline-flex;
+      align-items:center;
+      padding:7px 12px;
+      border-radius:999px;
+      font-size:.74rem;
+      font-weight:800;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.06);
+      color:#d7dee8;
+      white-space:nowrap;
+    }
+    .status-good {
+      background:rgba(0,208,132,.12);
+      border-color:rgba(0,208,132,.20);
+      color:#bdf4dc;
+    }
+    .ranking-products {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+    .podium-grid {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:16px;
+      margin-bottom:16px;
+    }
+    .podium-card {
+      min-height:136px;
+      padding:16px 18px;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      position:relative;
+      overflow:hidden;
+    }
+    .podium-card::before {
+      content:"";
+      position:absolute;
+      right:-28px;
+      top:-28px;
+      width:120px;
+      height:120px;
+      border-radius:50%;
+      pointer-events:none;
+    }
+    .podium-card.rank-1::before { background:radial-gradient(circle, rgba(0,208,132,.18), transparent 66%); }
+    .podium-card.rank-2::before { background:radial-gradient(circle, rgba(244,176,0,.18), transparent 66%); }
+    .podium-card.rank-3::before { background:radial-gradient(circle, rgba(255,122,0,.18), transparent 66%); }
+    .podium-rank {
+      color:#b6c0cd;
+      font-size:.74rem;
+      font-weight:700;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+    }
+    .podium-name {
+      margin:18px 0 0;
+      font-size:1.2rem;
+      font-weight:800;
+      letter-spacing:-.03em;
+    }
+    .podium-meta {
+      margin-top:8px;
+      color:var(--muted);
+      font-size:.8rem;
+      font-weight:500;
+    }
+    .podium-value {
+      margin-top:18px;
+      font-size:1.7rem;
+      font-weight:900;
+      letter-spacing:-.05em;
+    }
+    .table-panel {
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      padding:6px 20px 12px;
+    }
+    .info-grid {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:14px;
+    }
+    .info-box {
+      padding:16px;
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      min-height:188px;
+    }
+    .info-box h4 {
+      margin:0 0 14px;
+      font-size:1.05rem;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+    .info-list {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .info-item {
+      padding:12px 13px;
+      border-radius:16px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .info-item-title {
+      font-size:.98rem;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+    .info-item-sub {
+      margin-top:4px;
+      color:var(--muted);
+      font-size:.82rem;
+      font-weight:500;
+      line-height:1.35;
+    }
+    .empty-state {
+      padding:12px 13px;
+      border-radius:16px;
+      background:rgba(255,255,255,.03);
+      border:1px dashed rgba(255,255,255,.10);
+      color:var(--muted);
+      font-size:.84rem;
+      font-weight:500;
+      line-height:1.4;
+    }
+    .footer-note {
+      margin-top:14px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      color:var(--muted-2);
+      font-size:.78rem;
+      font-weight:500;
+    }
+    .muted { color:var(--muted); font-weight:500; }
+    @media (max-width:1180px) {
+      .kpi-grid, .podium-grid, .info-grid, .store-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width:860px) {
+      .page { width:min(100% - 18px, 1480px); margin:10px auto 26px; }
+      .header, .section { padding:18px; }
+      .brand-title { font-size:2.35rem; }
+      .detail-name { font-size:2.35rem; }
+      .kpi-grid, .podium-grid, .info-grid, .store-grid, .mini-grid { grid-template-columns:1fr; }
+      table { min-width:680px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel header">
+      <div class="header-top">
+        <div>
+          <h1 class="brand-title">CRED<span class="accent">VIX</span></h1>
+                    <div class="brand-line">Dashboard operacional diário · Vila Velha e Cariacica</div>
+        </div>
+        <div class="header-actions">
+          <div class="pill"><span class="dot loading" id="statusDot"></span><span id="lastUpdateLabel">Conectando à planilha...</span></div>
+          <button class="btn" id="reloadButton">ATUALIZAR</button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+    </section>
+
+    <section class="panel section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Performance por loja</h2>
+          <p class="section-copy">Leitura consolidada por loja e detalhamento por produto.</p>
+        </div>
+        <div class="control-group">
+          <div class="control-label">Loja em foco</div>
+          <div class="control-row" id="storeQuickSwitch"></div>
+        </div>
+      </div>
+      <div class="store-grid" id="storeSummary"></div>
+      <div id="storeDetailMount"></div>
+    </section>
+
+    <section class="panel section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Ranking operacional</h2>
+          <p class="section-copy" id="rankingSubtitle">Ranking consolidado do recorte atual.</p>
+        </div>
+        <div class="grouped-controls">
+          <div class="control-group">
+            <div class="control-label">Visão</div>
+            <div class="control-row" id="entityControls"></div>
+          </div>
+          <div class="control-group">
+            <div class="control-label">Ordenar por</div>
+            <div class="control-row" id="metricControls"></div>
+          </div>
+        </div>
+      </div>
+      <div class="ranking-products" id="productFilterBar"></div>
+      <div class="podium-grid" id="podiumGrid"></div>
+      <div class="table-panel">
+        <div class="detail-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Posição</th>
+                <th id="rankingNameCol">Consultor</th>
+                <th id="rankingAuxCol">Loja</th>
+                <th class="right" id="rankingValueCol">Valor</th>
+              </tr>
+            </thead>
+            <tbody id="rankingTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="footer-note">
+        <div>Fonte: abas LOJAS e DESEMPENHO POR CORRETOR</div>
+        <div id="rankingFoot"></div>
+      </div>
+    </section>
+
+    <section class="panel section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Onde agir agora</h2>
+          <p class="section-copy" id="actionCopy">Leitura rápida para foco operacional do dia.</p>
+        </div>
+      </div>
+      <div class="info-grid" id="actionGrid"></div>
+    </section>
+  </div>
+
+  <script>
+    const SHEET_ID = '126vv8_j5dTCBGHEN_KVF9oWA6NDYOb3zfuN4qWd44C8';
+    const SHEET_URLS = {
+      stores: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=2016453825`,
+      brokers: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=981232903`
+    };
+
+    let SNAPSHOT_DATE = new Date();
+    let STORE_ROWS = [];
+    let BROKER_ROWS = [];
+
+    const STORE_PRODUCT_ORDER = ['CNC','CARD','FGTS/CLT','CONSIGNADO','CESTA','BENEFÍCIO','MED+FAMILIAR'];
+    const RANK_PRODUCTS = ['MULTI PRODUTOS','CNC','CARD','FGTS/CLT','CONSIGNADO','CESTA','BENEFÍCIO','MED+FAMILIAR','ANTECIPAÇÃO'];
+
+    const state = {
+      selectedStore: 'CARIACICA',
+      rankingEntity: 'brokers',
+      rankingMetric: 'value',
+      rankingProduct: 'MULTI PRODUTOS'
+    };
+
+    const moneyFormatter = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' });
+    const numberFormatter = new Intl.NumberFormat('pt-BR');
+    const percentFormatter = new Intl.NumberFormat('pt-BR', { minimumFractionDigits:1, maximumFractionDigits:1 });
+
+    const byId = (id) => document.getElementById(id);
+    const sum = (arr, pick) => arr.reduce((acc, item) => acc + pick(item), 0);
+
+
+    function setLoadState(mode, label) {
+      const dot = byId('statusDot');
+      if (dot) dot.className = `dot ${mode === 'ok' ? '' : mode}`.trim();
+      byId('lastUpdateLabel').textContent = label;
+    }
+
+    function normalizeText(value) {
+      return String(value || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function normalizeProduct(value) {
+      return normalizeText(value).toUpperCase();
+    }
+
+    function detectUnit(productName) {
+      return normalizeProduct(productName) === 'MED+FAMILIAR' ? 'count' : 'money';
+    }
+
+    function parsePtBrNumber(value) {
+      const text = normalizeText(value);
+      if (!text) return 0;
+      const cleaned = text
+        .replace(/R\$/gi, '')
+        .replace(/\s+/g, '')
+        .replace(/\./g, '')
+        .replace(/,/g, '.');
+      const num = Number(cleaned);
+      return Number.isFinite(num) ? num : 0;
+    }
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let cell = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        const next = text[i + 1];
+        if (char === '"') {
+          if (inQuotes && next === '"') {
+            cell += '"';
+            i += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          row.push(cell);
+          cell = '';
+        } else if ((char === '\n' || char === '\r') && !inQuotes) {
+          if (char === '\r' && next === '\n') i += 1;
+          row.push(cell);
+          rows.push(row);
+          row = [];
+          cell = '';
+        } else {
+          cell += char;
+        }
+      }
+      if (cell.length || row.length) {
+        row.push(cell);
+        rows.push(row);
+      }
+      return rows.filter((r) => r.some((c) => String(c || '').trim() !== ''));
+    }
+
+    function csvRowsToObjects(text) {
+      const rows = parseCsv(text);
+      if (!rows.length) return [];
+      const headers = rows[0].map((h) => normalizeText(h));
+      return rows.slice(1).map((row) => {
+        const obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = row[index] ?? '';
+        });
+        return obj;
+      });
+    }
+
+    function mapStoreRows(rawRows) {
+      return rawRows.map((row) => {
+        const store = normalizeText(row['LOJA']);
+        const product = normalizeProduct(row['PRODUTO']);
+        if (!store || !product) return null;
+        return {
+          store,
+          product,
+          meta: parsePtBrNumber(row['META MENSAL']),
+          actual: parsePtBrNumber(row['REALIZADO']),
+          projection: parsePtBrNumber(row['PROJEÇÃO (EM VALOR)']),
+          gap: parsePtBrNumber(row['RESTA']),
+          unit: detectUnit(product)
+        };
+      }).filter(Boolean);
+    }
+
+    function mapBrokerRows(rawRows) {
+      return rawRows.map((row) => {
+        const broker = normalizeText(row['CORRETOR']);
+        const store = normalizeText(row['LOJA']);
+        const product = normalizeProduct(row['PRODUTO']);
+        if (!broker || !store || !product) return null;
+        return {
+          broker,
+          store,
+          product,
+          meta: parsePtBrNumber(row['META MENSAL']),
+          actual: parsePtBrNumber(row['REALIZADO']),
+          projection: parsePtBrNumber(row['PROJEÇÃO (EM VALOR)']),
+          gap: parsePtBrNumber(row['RESTA']),
+          unit: detectUnit(product)
+        };
+      }).filter(Boolean);
+    }
+
+    async function fetchSheetCsv(url) {
+      const response = await fetch(`${url}&cacheBust=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Falha HTTP ${response.status}`);
+      return response.text();
+    }
+
+    function renderLoadError(message) {
+      const errorCard = `
+        <article class="kpi-card tone-gap">
+          <div class="metric-label">Falha na atualização</div>
+          <div class="metric-value" style="font-size:1.5rem; line-height:1.2;">${message}</div>
+          <div class="metric-foot">Abra o painel hospedado em GitHub Pages, Hostinger ou outro servidor HTTPS se o navegador bloquear leitura externa da planilha.</div>
+        </article>
+      `;
+      byId('kpiGrid').innerHTML = errorCard;
+    }
+
+    async function loadLiveData() {
+      setLoadState('loading', 'Atualizando da planilha...');
+      try {
+        const [storesCsv, brokersCsv] = await Promise.all([
+          fetchSheetCsv(SHEET_URLS.stores),
+          fetchSheetCsv(SHEET_URLS.brokers)
+        ]);
+        STORE_ROWS = mapStoreRows(csvRowsToObjects(storesCsv));
+        BROKER_ROWS = mapBrokerRows(csvRowsToObjects(brokersCsv));
+        if (!STORE_ROWS.length || !BROKER_ROWS.length) {
+          throw new Error('A planilha respondeu, mas sem dados utilizáveis.');
+        }
+        SNAPSHOT_DATE = new Date();
+        renderAll();
+      } catch (error) {
+        console.error(error);
+        setLoadState('error', 'Falha ao atualizar da planilha');
+        if (!STORE_ROWS.length || !BROKER_ROWS.length) {
+          renderLoadError('Não foi possível carregar a base ao vivo.');
+        }
+      }
+    }
+
+    function formatMoney(value) {
+      return moneyFormatter.format(Number(value || 0));
+    }
+
+    function formatPct(value) {
+      return percentFormatter.format((value || 0) * 100) + '%';
+    }
+
+    function formatUnit(value) {
+      return numberFormatter.format(Number(value || 0));
+    }
+
+    function endOfMonth(date) {
+      return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    }
+
+    function businessDaysInMonth(date) {
+      const end = endOfMonth(date).getDate();
+      let total = 0;
+      for (let day = 1; day <= end; day += 1) {
+        const d = new Date(date.getFullYear(), date.getMonth(), day);
+        const weekday = d.getDay();
+        if (weekday !== 0 && weekday !== 6) total += 1;
+      }
+      return total;
+    }
+
+    function businessDaysWorked(date) {
+      let total = 0;
+      for (let day = 1; day <= date.getDate(); day += 1) {
+        const d = new Date(date.getFullYear(), date.getMonth(), day);
+        const weekday = d.getDay();
+        if (weekday !== 0 && weekday !== 6) total += 1;
+      }
+      return total;
+    }
+
+    function parseStatusFromPace(pct, expectedPct, workedDays) {
+      if (pct >= 1) return { label:'Meta batida', className:'status-good' };
+      if (workedDays < 5) return { label:'Em andamento', className:'' };
+      const ratio = expectedPct > 0 ? pct / expectedPct : 0;
+      if (ratio >= 1.05) return { label:'Acima do ritmo', className:'status-good' };
+      if (ratio >= 0.9) return { label:'No ritmo', className:'' };
+      return { label:'Abaixo do ritmo', className:'status-neutral' };
+    }
+
+    function aggregateStores() {
+      const grouped = new Map();
+      STORE_ROWS.forEach((row) => {
+        if (!grouped.has(row.store)) {
+          grouped.set(row.store, {
+            name: row.store,
+            meta: 0,
+            actual: 0,
+            projection: 0,
+            gap: 0,
+            medMeta: 0,
+            medActual: 0
+          });
+        }
+        const store = grouped.get(row.store);
+        if (row.unit === 'money') {
+          store.meta += row.meta;
+          store.actual += row.actual;
+          store.projection += row.projection;
+          store.gap += row.gap;
+        } else {
+          store.medMeta += row.meta;
+          store.medActual += row.actual;
+        }
+      });
+      const expectedPct = getExpectedPct();
+      const worked = businessDaysWorked(SNAPSHOT_DATE);
+      return Array.from(grouped.values()).map((item) => {
+        const pct = item.meta > 0 ? item.actual / item.meta : 0;
+        const pace = parseStatusFromPace(pct, expectedPct, worked);
+        return {
+          ...item,
+          pct,
+          pace
+        };
+      }).sort((a,b) => b.actual - a.actual);
+    }
+
+    function productsByStore(storeName) {
+      return STORE_ROWS
+        .filter((row) => row.store === storeName)
+        .sort((a,b) => STORE_PRODUCT_ORDER.indexOf(a.product) - STORE_PRODUCT_ORDER.indexOf(b.product));
+    }
+
+    function aggregateProducts() {
+      const grouped = new Map();
+      STORE_ROWS.forEach((row) => {
+        const key = row.product;
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            name: row.product,
+            unit: row.unit,
+            meta: 0,
+            actual: 0,
+            projection: 0,
+            gap: 0
+          });
+        }
+        const product = grouped.get(key);
+        product.meta += row.meta;
+        product.actual += row.actual;
+        product.projection += row.projection;
+        product.gap += row.gap;
+      });
+      return Array.from(grouped.values()).map((item) => {
+        const pct = item.meta > 0 ? item.actual / item.meta : 0;
+        return { ...item, pct };
+      });
+    }
+
+    function getExpectedPct() {
+      return businessDaysWorked(SNAPSHOT_DATE) / businessDaysInMonth(SNAPSHOT_DATE);
+    }
+
+    function buildKpis() {
+      const moneyRows = STORE_ROWS.filter((row) => row.unit === 'money');
+      const meta = sum(moneyRows, (row) => row.meta);
+      const actual = sum(moneyRows, (row) => row.actual);
+      const projection = sum(moneyRows, (row) => row.projection);
+      const gap = sum(moneyRows, (row) => row.gap);
+      const pct = meta > 0 ? actual / meta : 0;
+      const totalBusinessDays = businessDaysInMonth(SNAPSHOT_DATE);
+      const workedBusinessDays = businessDaysWorked(SNAPSHOT_DATE);
+      const remainingBusinessDays = Math.max(totalBusinessDays - workedBusinessDays, 0);
+      const dailyNeed = remainingBusinessDays > 0 ? gap / remainingBusinessDays : 0;
+      const expectedPct = getExpectedPct();
+      const paceRatio = expectedPct > 0 ? pct / expectedPct : 0;
+      let paceText = 'No ritmo';
+      if (paceRatio >= 1.05) paceText = 'Acima do ritmo necessário';
+      else if (paceRatio < 0.9) paceText = 'Abaixo do ritmo necessário';
+
+      return [
+        { tone:'tone-meta', label:'Meta monetária', value:formatMoney(meta), foot:'Somatório monetário das duas lojas.' },
+        { tone:'tone-realizado', label:'Realizado', value:formatMoney(actual), foot:'Produção capturada no snapshot atual.' },
+        { tone:'tone-pct', label:'% atingido', value:formatPct(pct), foot:`Ritmo esperado hoje: ${formatPct(expectedPct)}.` },
+        { tone:'tone-projecao', label:'Projeção', value:formatMoney(projection), foot:'Projeção monetária informada pela base.' },
+        { tone:'tone-gap', label:'Gap para meta', value:formatMoney(gap), foot:'Quanto falta para fechar a meta monetária.' },
+        { tone:'tone-diaria', label:'Meta diária restante', value:formatMoney(dailyNeed), foot:`${remainingBusinessDays} dias úteis restantes · ${paceText}.` }
+      ];
+    }
+
+    function renderKpis() {
+      const html = buildKpis().map((item) => `
+        <article class="kpi-card ${item.tone}">
+          <div class="metric-label">${item.label}</div>
+          <div class="metric-value">${item.value}</div>
+          <div class="metric-foot">${item.foot}</div>
+        </article>
+      `).join('');
+      byId('kpiGrid').innerHTML = html;
+    }
+
+    function renderStoreSwitch(stores) {
+      byId('storeQuickSwitch').innerHTML = stores.map((store) => `
+        <button class="store-switch-btn ${state.selectedStore === store.name ? 'active' : ''}" data-store-switch="${store.name}">
+          ${store.name}
+        </button>
+      `).join('');
+      byId('storeQuickSwitch').querySelectorAll('[data-store-switch]').forEach((button) => {
+        button.addEventListener('click', () => {
+          state.selectedStore = button.dataset.storeSwitch;
+          renderStores();
+        });
+      });
+    }
+
+    function renderStores() {
+      const stores = aggregateStores();
+      if (!stores.find((item) => item.name === state.selectedStore)) {
+        state.selectedStore = stores[0]?.name || '';
+      }
+      renderStoreSwitch(stores);
+      byId('storeSummary').innerHTML = stores.map((store) => `
+        <article class="store-card ${store.name === state.selectedStore ? 'active' : ''}" data-store-card="${store.name}">
+          <div class="store-top">
+            <div>
+              <h3 class="store-name">${store.name}</h3>
+              <div class="store-desc">Meta monetária consolidada da loja.</div>
+            </div>
+            <div class="pct-badge">${formatPct(store.pct)}</div>
+          </div>
+          <div class="mini-grid">
+            <div class="mini-card">
+              <div class="mini-label">Realizado</div>
+              <div class="mini-value">${formatMoney(store.actual)}</div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Meta</div>
+              <div class="mini-value">${formatMoney(store.meta)}</div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Resta</div>
+              <div class="mini-value">${formatMoney(store.gap)}</div>
+            </div>
+          </div>
+        </article>
+      `).join('');
+
+      byId('storeSummary').querySelectorAll('[data-store-card]').forEach((card) => {
+        card.addEventListener('click', () => {
+          state.selectedStore = card.dataset.storeCard;
+          renderStores();
+        });
+      });
+
+      const worked = businessDaysWorked(SNAPSHOT_DATE);
+      const expectedPct = getExpectedPct();
+      const selectedRows = productsByStore(state.selectedStore);
+      const tableRows = selectedRows.map((row) => {
+        const pct = row.meta > 0 ? row.actual / row.meta : 0;
+        const status = row.actual >= row.meta && row.meta > 0 ? { label:'Meta batida', className:'status-good' } : { label:'Em andamento', className:'' };
+        return `
+          <tr>
+            <td><strong>${row.product}</strong></td>
+            <td class="right">${row.unit === 'money' ? formatMoney(row.meta) : formatUnit(row.meta)}</td>
+            <td class="right">${row.unit === 'money' ? formatMoney(row.actual) : formatUnit(row.actual)}</td>
+            <td class="right">${row.unit === 'money' ? formatMoney(row.gap) : formatUnit(row.gap)}</td>
+            <td class="right"><span class="status-chip ${status.className}">${status.label}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+      byId('storeDetailMount').innerHTML = `
+        <div class="detail-panel">
+          <div class="detail-top">
+            <div>
+              <h3 class="detail-name">${state.selectedStore}</h3>
+              <div class="detail-desc">Detalhamento por produto</div>
+            </div>
+            <div class="detail-controls">
+              ${stores.map((store) => `
+                <button class="store-switch-btn ${store.name === state.selectedStore ? 'active' : ''}" data-detail-store="${store.name}">
+                  ${store.name}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+          <div class="detail-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th class="right">Meta mensal</th>
+                  <th class="right">Atingido</th>
+                  <th class="right">Quanto resta</th>
+                  <th class="right">Status da meta</th>
+                </tr>
+              </thead>
+              <tbody>${tableRows}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      byId('storeDetailMount').querySelectorAll('[data-detail-store]').forEach((button) => {
+        button.addEventListener('click', () => {
+          state.selectedStore = button.dataset.detailStore;
+          renderStores();
+        });
+      });
+    }
+
+    function selectedProductIsCount() {
+      return state.rankingProduct === 'MED+FAMILIAR';
+    }
+
+    function rankMetricLabel() {
+      if (state.rankingMetric === 'pct') return '% da meta';
+      if (selectedProductIsCount()) return 'Quantidade';
+      return 'Valor';
+    }
+
+    function aggregateRankingRows() {
+      const rows = state.rankingEntity === 'brokers' ? BROKER_ROWS : STORE_ROWS;
+      const grouped = new Map();
+
+      rows.forEach((row) => {
+        const matchProduct = state.rankingProduct === 'MULTI PRODUTOS'
+          ? (row.unit === 'money')
+          : row.product === state.rankingProduct;
+        if (!matchProduct) return;
+
+        const name = state.rankingEntity === 'brokers' ? row.broker : row.store;
+        const key = name;
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            name,
+            aux: state.rankingEntity === 'brokers' ? row.store : `${state.rankingProduct === 'MULTI PRODUTOS' ? 'Produtos monetários' : row.product}`,
+            meta: 0,
+            actual: 0,
+            projection: 0,
+            gap: 0,
+            unit: row.unit,
+            rowCount: 0
+          });
+        }
+        const item = grouped.get(key);
+        item.meta += row.meta;
+        item.actual += row.actual;
+        item.projection += row.projection;
+        item.gap += row.gap;
+        item.rowCount += 1;
+        if (state.rankingEntity === 'stores') {
+          item.aux = `${item.rowCount} item${item.rowCount > 1 ? 's' : ''}`;
+        }
+      });
+
+      const results = Array.from(grouped.values()).map((item) => {
+        const pct = item.meta > 0 ? item.actual / item.meta : 0;
+        return { ...item, pct };
+      });
+
+      const orderKey = state.rankingMetric === 'pct' ? 'pct' : 'actual';
+      results.sort((a,b) => b[orderKey] - a[orderKey] || b.actual - a.actual);
+      return results;
+    }
+
+    function displayRankingMetric(item) {
+      if (state.rankingMetric === 'pct') return formatPct(item.pct);
+      if (selectedProductIsCount()) return formatUnit(item.actual);
+      return formatMoney(item.actual);
+    }
+
+    function renderRankingControls() {
+      byId('entityControls').innerHTML = `
+        <button class="toggle-btn ${state.rankingEntity === 'brokers' ? 'active' : ''}" data-entity="brokers">Corretores</button>
+        <button class="toggle-btn ${state.rankingEntity === 'stores' ? 'active' : ''}" data-entity="stores">Lojas</button>
+      `;
+      byId('metricControls').innerHTML = `
+        <button class="toggle-btn ${state.rankingMetric === 'value' ? 'active' : ''}" data-metric="value">${selectedProductIsCount() ? 'Quantidade' : 'Valor'}</button>
+        <button class="toggle-btn ${state.rankingMetric === 'pct' ? 'active' : ''}" data-metric="pct">% da meta</button>
+      `;
+
+      document.querySelectorAll('[data-entity]').forEach((button) => {
+        button.addEventListener('click', () => {
+          state.rankingEntity = button.dataset.entity;
+          renderRanking();
+        });
+      });
+      document.querySelectorAll('[data-metric]').forEach((button) => {
+        button.addEventListener('click', () => {
+          state.rankingMetric = button.dataset.metric;
+          renderRanking();
+        });
+      });
+    }
+
+    function renderRanking() {
+      renderRankingControls();
+      byId('productFilterBar').innerHTML = RANK_PRODUCTS.map((product) => `
+        <button class="chip-btn ${state.rankingProduct === product ? 'active' : ''}" data-product="${product}">
+          ${product}
+        </button>
+      `).join('');
+      byId('productFilterBar').querySelectorAll('[data-product]').forEach((button) => {
+        button.addEventListener('click', () => {
+          state.rankingProduct = button.dataset.product;
+          renderRanking();
+        });
+      });
+
+      const rows = aggregateRankingRows();
+      const topThree = rows.slice(0, 3);
+      const auxLabel = state.rankingEntity === 'brokers' ? 'Loja' : 'Base';
+      byId('rankingNameCol').textContent = state.rankingEntity === 'brokers' ? 'Consultor' : 'Loja';
+      byId('rankingAuxCol').textContent = auxLabel;
+      byId('rankingValueCol').textContent = rankMetricLabel();
+      byId('rankingSubtitle').textContent = state.rankingEntity === 'brokers'
+        ? `Ranking de corretores em ${state.rankingProduct.toLowerCase()}.`
+        : `Ranking de lojas em ${state.rankingProduct.toLowerCase()}.`;
+      byId('rankingFoot').textContent = `Ordenação atual: ${rankMetricLabel().toLowerCase()}`;
+
+      byId('podiumGrid').innerHTML = topThree.map((item, index) => `
+        <article class="podium-card rank-${index + 1}">
+          <div class="podium-rank">#${index + 1}</div>
+          <div class="podium-name">${item.name}</div>
+          <div class="podium-meta">${state.rankingEntity === 'brokers' ? item.aux : (state.rankingProduct === 'MULTI PRODUTOS' ? 'Consolidado monetário' : item.aux)}</div>
+          <div class="podium-value">${displayRankingMetric(item)}</div>
+        </article>
+      `).join('');
+
+      byId('rankingTableBody').innerHTML = rows.map((item, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td><strong>${item.name}</strong></td>
+          <td>${item.aux}</td>
+          <td class="right">${displayRankingMetric(item)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function conservativeUnderPace(item, expectedPct, workedDays) {
+      const ratio = expectedPct > 0 ? item.pct / expectedPct : 0;
+      if (workedDays < 5) return false;
+      if (workedDays < 10) return ratio < 0.75;
+      return ratio < 0.85;
+    }
+
+    function buildActionColumns() {
+      const workedDays = businessDaysWorked(SNAPSHOT_DATE);
+      const expectedPct = getExpectedPct();
+      const stores = aggregateStores();
+      const products = aggregateProducts().filter((item) => item.unit === 'money');
+
+      const underStores = stores.filter((item) => conservativeUnderPace(item, expectedPct, workedDays))
+        .sort((a,b) => a.pct - b.pct);
+      const underProducts = products.filter((item) => conservativeUnderPace(item, expectedPct, workedDays))
+        .sort((a,b) => a.pct - b.pct);
+      const closest = stores.slice().sort((a,b) => b.pct - a.pct);
+      const biggestGap = products.slice().sort((a,b) => b.gap - a.gap);
+
+      const headerCopy = workedDays < 5
+        ? 'Leitura conservadora no início do mês para evitar falso crítico.'
+        : 'Leitura rápida para foco operacional do dia.';
+      byId('actionCopy').textContent = headerCopy;
+
+      return [
+        {
+          title: 'Lojas abaixo do ritmo',
+          items: underStores.length
+            ? underStores.map((item) => ({
+                title: item.name,
+                sub: `${formatPct(item.pct)} · ritmo esperado ${formatPct(expectedPct)}`
+              }))
+            : [{ title:'Sem loja crítica no critério atual', sub: workedDays < 5 ? 'Criticidade só acende após o 5º dia útil.' : 'Nenhuma loja ficou materialmente abaixo do ritmo.' }]
+        },
+        {
+          title: 'Produtos abaixo do ritmo',
+          items: underProducts.length
+            ? underProducts.map((item) => ({
+                title: item.name,
+                sub: `${formatPct(item.pct)} · gap ${formatMoney(item.gap)}`
+              }))
+            : [{ title:'Sem produto crítico no critério atual', sub: workedDays < 5 ? 'Início de mês ainda pede leitura conservadora.' : 'Nenhum produto ficou materialmente abaixo do ritmo.' }]
+        },
+        {
+          title: 'Mais próximas da meta',
+          items: closest.map((item) => ({
+            title: item.name,
+            sub: `${formatPct(item.pct)} · ${formatMoney(item.actual)} realizado`
+          }))
+        },
+        {
+          title: 'Maior gap em valor',
+          items: biggestGap.slice(0,4).map((item) => ({
+            title: item.name,
+            sub: `${formatMoney(item.gap)} restantes`
+          }))
+        }
+      ];
+    }
+
+    function renderActions() {
+      const columns = buildActionColumns();
+      byId('actionGrid').innerHTML = columns.map((column) => `
+        <article class="info-box">
+          <h4>${column.title}</h4>
+          <div class="info-list">
+            ${column.items.map((item) => `
+              <div class="${item.title.startsWith('Sem ') ? 'empty-state' : 'info-item'}">
+                <div class="${item.title.startsWith('Sem ') ? '' : 'info-item-title'}">${item.title}</div>
+                <div class="${item.title.startsWith('Sem ') ? '' : 'info-item-sub'}">${item.sub}</div>
+              </div>
+            `).join('')}
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function renderAll() {
+      const stores = aggregateStores();
+      if (!state.selectedStore && stores[0]) state.selectedStore = stores[0].name;
+      setLoadState('ok', `Credvix ES · atualizado às ${SNAPSHOT_DATE.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`);
+      renderKpis();
+      renderStores();
+      renderRanking();
+      renderActions();
+    }
+
+    byId('reloadButton').addEventListener('click', loadLiveData);
+    loadLiveData();
+  </script>
+</body>
+</html>
